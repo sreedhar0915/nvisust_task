@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:nvisust_task/features/auth/models/product.dart';
 import 'package:http/http.dart' as http;
 import 'package:nvisust_task/features/auth/models/users.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthServices {
   static const String baseUrl = "https://fakestoreapi.com";
@@ -27,21 +28,43 @@ class AuthServices {
     String email,
     String password,
   ) async {
-    await Future.delayed(const Duration(seconds: 2)); // simulate API delay
-    if (email.contains("@")) {
-      return User(name: name, email: email, token: _generateToken());
-    } else {
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!email.contains("@")) {
       throw Exception("Invalid email address");
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("name", name);
+    await prefs.setString("email", email);
+    await prefs.setString("password", password);
+
+    final user = User(name: name, email: email, token: _generateToken());
+
+    return user;
   }
 
-  //login
+  // Login
   static Future<User> login(String email, String password) async {
     await Future.delayed(const Duration(seconds: 2)); // simulate API delay
-    if (email == "test@example.com" && password == "1234") {
-      return User(name: "Test User", email: email, token: _generateToken());
+
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString("email");
+    final savedPassword = prefs.getString("password");
+    final savedName = prefs.getString("name");
+
+    if (savedEmail == null || savedPassword == null) {
+      throw Exception("User not registered");
+    }
+
+    if (email == savedEmail && password == savedPassword) {
+      return User(
+        name: savedName ?? "User",
+        email: savedEmail,
+        token: _generateToken(),
+      );
     } else {
-      throw Exception("Invalid credentials");
+      throw Exception("Invalid email or password");
     }
   }
 

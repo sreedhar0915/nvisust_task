@@ -8,6 +8,7 @@ import 'package:nvisust_task/features/auth/screens/register_screen.dart';
 import 'package:nvisust_task/features/auth/state/auth_provider.dart';
 import 'package:nvisust_task/features/auth/widgets/custom_textfield.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,28 +75,84 @@ class _LoginScreenState extends State<LoginScreen> {
     return Align(
       alignment: Alignment.center,
       child: InkWell(
-        onTap: () {
+        onTap: () async {
+          final provider = Provider.of<AuthProvider>(context, listen: false);
+
+          // Step 1: Validate form
           if (provider.loginFormKey.currentState!.validate()) {
-            provider.loginUser();
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
-            );
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: AppColors.green,
-                content: Text("login successfully"),
-              ),
-            );
+            final loginEmail = provider.loginEmailController.text.trim();
+            final loginPassword = provider.loginPasswordController.text.trim();
+
+            // Step 2: Retrieve stored credentials from SharedPreferences
+            final prefs = await SharedPreferences.getInstance();
+            final savedEmail = prefs.getString('email');
+            final savedPassword = prefs.getString('password');
+
+            // Step 3: Check if user is registered
+            if (savedEmail == null || savedPassword == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Colors.red,
+                  content: Text("User not registered. Please sign up first."),
+                ),
+              );
+              return;
+            }
+
+            // Step 4: Match login credentials
+            if (loginEmail == savedEmail && loginPassword == savedPassword) {
+              await provider.loginUser();
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Colors.green,
+                  content: Text("Login successful"),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Colors.red,
+                  content: Text("Invalid email or password."),
+                ),
+              );
+            }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                backgroundColor: AppColors.red,
-                content: Text("Please login properly"),
+                backgroundColor: Colors.red,
+                content: Text("Please enter valid login details."),
               ),
             );
           }
         },
+        // onTap: () {
+        //   if (provider.loginFormKey.currentState!.validate()) {
+        //     provider.loginUser();
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(builder: (context) => ProfileScreen()),
+        //     );
+        //     ScaffoldMessenger.of(context).showSnackBar(
+        //       const SnackBar(
+        //         backgroundColor: AppColors.green,
+        //         content: Text("login successfully"),
+        //       ),
+        //     );
+        //   } else {
+        //     ScaffoldMessenger.of(context).showSnackBar(
+        //       const SnackBar(
+        //         backgroundColor: AppColors.red,
+        //         content: Text("Please login properly"),
+        //       ),
+        //     );
+        //   }
+        // },
         child: Container(
           height: 50,
           width: 300,
