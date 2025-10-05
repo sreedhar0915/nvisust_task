@@ -19,6 +19,15 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   @override
+  void initState() {
+    super.initState();
+    //  Clear fields whenever entering login screen
+    final provider = Provider.of<AuthProvider>(context, listen: false);
+    provider.loginEmailController.clear();
+    provider.loginPasswordController.clear();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = context.watch<AuthProvider>(); //calling provider
     ScreenUtil.getInstance().init(context); //using mediaquery
@@ -121,6 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   content: Text("Invalid email or password."),
                 ),
               );
+              provider.clearLoginControllers(); //  Clear after failed login
             }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -91,6 +91,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // for clearing login controllers
+  void clearLoginControllers() {
+    loginEmailController.clear();
+    loginPasswordController.clear();
+    notifyListeners();
+  }
+
   // saving using SharedPreferences
   Future<void> _saveUserToPrefs(User user) async {
     final prefs = await SharedPreferences.getInstance();
